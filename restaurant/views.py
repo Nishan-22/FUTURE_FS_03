@@ -1,15 +1,102 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Category, MenuItem, Order, OrderItem, Reservation, Review
+from .forms import MenuItemForm
 from django.contrib import messages
 from django.db import transaction
 from datetime import datetime
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login as auth_login
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login as auth_login, authenticate
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Avg, Count
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse
-import json
+
+def is_staff(user):
+    return user.is_authenticated and (user.is_staff or user.groups.filter(name='Staff').exists())
+
+def staff_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                if is_staff(user):
+                    auth_login(request, user)
+                    messages.success(request, f'Welcome back, {username}! Staff dashboard access granted.')
+                    return redirect('staff_dashboard')
+                else:
+                    messages.error(request, 'Access denied. This login is for staff members only.')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'restaurant/staff_login.html', {'form': form})
+
+@user_passes_test(is_staff)
+def staff_dashboard(request):
+    pending_orders = Order.objects.filter(status__in=['Pending', 'Processing']).order_by('-order_date')
+    recent_reservations = Reservation.objects.filter(confirmed=False).order_by('date', 'time')
+    
+    context = {
+        'pending_orders': pending_orders,
+        'recent_reservations': recent_reservations,
+    }
+    return render(request, 'restaurant/staff_dashboard.html', context)
+
+@user_passes_test(is_staff)
+def update_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status in ['Pending', 'Processing', 'Completed', 'Cancelled']:
+            order.status = status
+            order.save()
+            messages.success(request, f'Order #{order.id} status updated to {status}.')
+    return redirect('staff_dashboard')
+
+@user_passes_test(is_staff)
+def confirm_reservation_staff(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    reservation.confirmed = True
+    reservation.save()
+    messages.success(request, f'Reservation for {reservation.name} confirmed.')
+    return redirect('staff_dashboard')
+
+@user_passes_test(is_staff)
+def add_menu_item(request):
+    if request.method == 'POST':
+        form = MenuItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'New menu item added successfully!')
+            return redirect('home')
+    else:
+        form = MenuItemForm()
+    return render(request, 'restaurant/menu_item_form.html', {'form': form, 'title': 'Add Menu Item'})
+
+@user_passes_test(is_staff)
+def edit_menu_item(request, item_id):
+    item = get_object_or_404(MenuItem, id=item_id)
+    if request.method == 'POST':
+        form = MenuItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'{item.name} updated successfully!')
+            return redirect('home')
+    else:
+        form = MenuItemForm(instance=item)
+    return render(request, 'restaurant/menu_item_form.html', {'form': form, 'title': f'Edit {item.name}'})
+
+@user_passes_test(is_staff)
+def delete_menu_item(request, item_id):
+    item = get_object_or_404(MenuItem, id=item_id)
+    if request.method == 'POST':
+        name = item.name
+        item.delete()
+        messages.success(request, f'{name} deleted successfully!')
+        return redirect('home')
+    return render(request, 'restaurant/item_confirm_delete.html', {'item': item})
 
 def home(request):
     categories = Category.objects.all().order_by('name')
@@ -68,37 +155,37 @@ def profile(request):
     return render(request, 'restaurant/profile.html', context)
 
 @login_required
-def add_to_cart(request, item_id):
+def add_to_order(request, item_id):
     item = get_object_or_404(MenuItem, id=item_id)
-    if 'cart' not in request.session:
-        request.session['cart'] = {}
+    if 'order' not in request.session:
+        request.session['order'] = {}
     
-    cart = request.session['cart']
+    order = request.session['order']
     item_id_str = str(item_id)
     
-    if item_id_str in cart:
-        cart[item_id_str]['quantity'] += 1
+    if item_id_str in order:
+        order[item_id_str]['quantity'] += 1
     else:
-        cart[item_id_str] = {
+        order[item_id_str] = {
             'name': item.name,
             'price': float(item.price),
             'quantity': 1,
             'image': item.image.url if item.image else None,
         }
     
-    request.session['cart'] = cart
-    messages.success(request, f'{item.name} added to cart!')
+    request.session['order'] = order
+    messages.success(request, f'{item.name} added to order!')
     return redirect('home')
 
 @login_required
-def cart_view(request):
-    cart_items = []
+def order_view(request):
+    order_items = []
     total_price = 0
     
-    if 'cart' in request.session:
-        for item_id, item_data in request.session['cart'].items():
+    if 'order' in request.session:
+        for item_id, item_data in request.session['order'].items():
             item_total = item_data['price'] * item_data['quantity']
-            cart_items.append({
+            order_items.append({
                 'item_id': item_id,
                 'name': item_data['name'],
                 'price': item_data['price'],
@@ -109,55 +196,55 @@ def cart_view(request):
             total_price += item_total
     
     context = {
-        'cart_items': cart_items,
+        'order_items': order_items,
         'total_price': total_price,
     }
-    return render(request, 'restaurant/cart.html', context)
+    return render(request, 'restaurant/orders.html', context)
 
 @login_required
-def update_cart_quantity(request, item_id):
+def update_order_quantity(request, item_id):
     if request.method == 'POST':
         quantity = int(request.POST.get('quantity', 0))
         
-        if 'cart' in request.session:
-            cart = request.session['cart']
+        if 'order' in request.session:
+            order = request.session['order']
             item_id_str = str(item_id)
             
-            if item_id_str in cart:
+            if item_id_str in order:
                 if quantity <= 0:
-                    del cart[item_id_str]
+                    del order[item_id_str]
                 else:
-                    cart[item_id_str]['quantity'] = quantity
+                    order[item_id_str]['quantity'] = quantity
                 
-                request.session['cart'] = cart
+                request.session['order'] = order
         
-        messages.success(request, 'Cart updated successfully!')
+        messages.success(request, 'Order updated successfully!')
     
-    return redirect('cart_view')
+    return redirect('order_view')
 
 @login_required
-def remove_from_cart(request, item_id):
+def remove_from_order(request, item_id):
     if request.method == 'POST':
-        if 'cart' in request.session:
-            cart = request.session['cart']
+        if 'order' in request.session:
+            order = request.session['order']
             item_id_str = str(item_id)
             
-            if item_id_str in cart:
-                del cart[item_id_str]
-                request.session['cart'] = cart
-                messages.success(request, 'Item removed from cart!')
+            if item_id_str in order:
+                del order[item_id_str]
+                request.session['order'] = order
+                messages.success(request, 'Item removed from order!')
     
-    return redirect('cart_view')
+    return redirect('order_view')
 
 @login_required
 def checkout(request):
-    if 'cart' in request.session and request.session['cart']:
-        cart_items = []
+    if 'order' in request.session and request.session['order']:
+        order_items = []
         total_amount = 0
         
-        for item_id, item_data in request.session['cart'].items():
+        for item_id, item_data in request.session['order'].items():
             item_total = item_data['price'] * item_data['quantity']
-            cart_items.append({
+            order_items.append({
                 'menu_item_id': int(item_id),
                 'quantity': item_data['quantity'],
                 'subtotal': item_total,
@@ -182,7 +269,7 @@ def checkout(request):
                     )
                     
                     # Add order items
-                    for item in cart_items:
+                    for item in order_items:
                         menu_item = get_object_or_404(MenuItem, id=item['menu_item_id'])
                         OrderItem.objects.create(
                             order=order,
@@ -191,8 +278,8 @@ def checkout(request):
                             price=menu_item.price,
                         )
                 
-                # Clear cart
-                request.session['cart'] = {}
+                # Clear order
+                request.session['order'] = {}
                 
                 messages.success(request, f'Order #{order.id} placed successfully! Our team will process it shortly.')
                 return redirect('home')
@@ -204,14 +291,14 @@ def checkout(request):
         customer_email = request.user.email
         
         context = {
-            'cart_items': cart_items,
+            'order_items': order_items,
             'total_amount': total_amount,
             'customer_name': customer_name,
             'customer_email': customer_email,
         }
         return render(request, 'restaurant/checkout.html', context)
     else:
-        messages.error(request, 'Your cart is empty.')
+        messages.error(request, 'Your order is empty.')
         return redirect('home')
 
 def reservation_view(request):

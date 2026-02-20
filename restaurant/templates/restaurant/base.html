@@ -136,9 +136,15 @@
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="{% url 'home' %}" class="nav-link text-dark hover:text-primary">Home</a>
-                    <a href="{% url 'home' %}#menu" class="nav-link text-dark hover:text-primary">Menu</a>
-                    <a href="{% url 'reservation_view' %}" class="nav-link text-dark hover:text-primary">Reserve</a>
-                    <a href="{% url 'contact_us' %}" class="nav-link text-dark hover:text-primary">Contact</a>
+                    {% if not is_staff_member %}
+                        <a href="{% url 'home' %}#menu" class="nav-link text-dark hover:text-primary">Menu</a>
+                        <a href="{% url 'reservation_view' %}" class="nav-link text-dark hover:text-primary">Reserve</a>
+                        <a href="{% url 'contact_us' %}" class="nav-link text-dark hover:text-primary">Contact</a>
+                        <a href="{% url 'submit_review' %}" class="nav-link text-dark hover:text-primary">Reviews</a>
+                    {% endif %}
+                    {% if is_staff_member %}
+                        <a href="{% url 'staff_dashboard' %}" class="nav-link text-primary font-bold">Dashboard</a>
+                    {% endif %}
                     {% if user.is_authenticated %}
                         <a href="{% url 'profile' %}" class="nav-link text-dark hover:text-primary">Profile</a>
                         <form method="post" action="{% url 'logout' %}" class="inline" onsubmit="return confirm('Are you sure you want to logout?');">
@@ -148,14 +154,16 @@
                     {% else %}
                         <a href="{% url 'login' %}" class="nav-link text-dark hover:text-primary">Login</a>
                     {% endif %}
-                    <a href="{% url 'cart_view' %}" class="nav-link text-dark hover:text-primary">
-                        <i class="fas fa-shopping-cart"></i> Cart
-                        {% if request.session.cart %}
-                            <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
-                                {{ request.session.cart.items|length }}
-                            </span>
-                        {% endif %}
-                    </a>
+                    {% if not is_staff_member %}
+                        <a href="{% url 'order_view' %}" class="nav-link text-dark hover:text-primary">
+                            <i class="fas fa-shopping-bag"></i> Orders
+                            {% if request.session.order %}
+                                <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                                    {{ request.session.order.items|length }}
+                                </span>
+                            {% endif %}
+                        </a>
+                    {% endif %}
                 </div>
                 <div class="flex items-center md:hidden">
                     <button id="mobile-menu-button" class="outline-none">
@@ -169,9 +177,15 @@
         <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <a href="{% url 'home' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Home</a>
-                <a href="{% url 'home' %}#menu" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Menu</a>
-                <a href="{% url 'reservation_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Reserve</a>
-                <a href="{% url 'contact_us' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Contact</a>
+                {% if not is_staff_member %}
+                    <a href="{% url 'home' %}#menu" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Menu</a>
+                    <a href="{% url 'reservation_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Reserve</a>
+                    <a href="{% url 'contact_us' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Contact</a>
+                    <a href="{% url 'submit_review' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Reviews</a>
+                {% endif %}
+                {% if is_staff_member %}
+                    <a href="{% url 'staff_dashboard' %}" class="block px-3 py-2 rounded-md text-base font-medium text-primary bg-primary/5 font-bold">Staff Dashboard</a>
+                {% endif %}
                 {% if user.is_authenticated %}
                     <a href="{% url 'profile' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Profile</a>
                     <form method="post" action="{% url 'logout' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100 w-full text-left" onsubmit="return confirm('Are you sure you want to logout?');">
@@ -181,14 +195,16 @@
                 {% else %}
                     <a href="{% url 'login' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Login</a>
                 {% endif %}
-                <a href="{% url 'cart_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">
-                    <i class="fas fa-shopping-cart"></i> Cart
-                    {% if request.session.cart %}
-                        <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
-                            {{ request.session.cart.items|length }}
-                        </span>
-                    {% endif %}
-                </a>
+                {% if not is_staff_member %}
+                    <a href="{% url 'order_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">
+                        <i class="fas fa-shopping-bag"></i> Orders
+                        {% if request.session.order %}
+                            <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                                {{ request.session.order.items|length }}
+                            </span>
+                        {% endif %}
+                    </a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -241,6 +257,7 @@
                         <li><a href="{% url 'home' %}#menu" class="text-gray-300 hover:text-white">Menu</a></li>
                         <li><a href="{% url 'reservation_view' %}" class="text-gray-300 hover:text-white">Reservations</a></li>
                         <li><a href="{% url 'contact_us' %}" class="text-gray-300 hover:text-white">Contact Us</a></li>
+                        <li><a href="{% url 'staff_login' %}" class="text-gray-300 hover:text-white">Staff Portal</a></li>
                     </ul>
                 </div>
                 

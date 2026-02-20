@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Add to cart animation
-    const addToCartButtons = document.querySelectorAll('[data-add-to-cart]');
-    addToCartButtons.forEach(button => {
+    const addToOrderButtons = document.querySelectorAll('[data-add-to-order]');
+    addToOrderButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             const originalText = this.innerHTML;
             this.innerHTML = 'Added!';

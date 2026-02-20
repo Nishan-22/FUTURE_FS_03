@@ -5,7 +5,7 @@ A modern cafe website built with Django and Tailwind CSS featuring menu display,
 ## Features
 
 - 📋 **Menu Management** - Display categorized menu items with images and prices
-- 🛒 **Online Ordering** - Add items to cart and checkout
+- 🛒 **Online Orders** - Add items to your order and checkout
 - 🪑 **Table Reservations** - Online reservation system
 - ⭐ **Customer Reviews** - Rating and review system
 - 👤 **User Authentication** - Registration and login functionality

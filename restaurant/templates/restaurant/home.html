@@ -24,6 +24,7 @@
                         expertly prepared dishes, and the perfect cup of coffee in a warm, 
                         inviting atmosphere.
                     </p>
+                    {% if not is_staff_member %}
                     <div class="flex flex-col sm:flex-row gap-4">
                         <a href="#menu" class="px-8 py-3.5 rounded-full font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-[1.02] active:scale-[0.98] bg-secondary text-white hover:bg-emerald-700 shadow-lg shadow-secondary/30 focus:ring-secondary text-center">
                             View Our Menu
@@ -32,6 +33,7 @@
                             Reserve a Table
                         </a>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="hidden lg:block">
                     <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-8 border border-white/30">
@@ -74,70 +76,133 @@
             <div class="absolute inset-0 bg-gradient-to-b from-white/90 to-light/90"></div>
         </div>
         
-        <div class="max-w-7xl mx-auto relative z-10">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold text-dark mb-4 text-center">Our Featured Menu</h2>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto text-center mb-16">
-                    Handcrafted with passion and premium ingredients. Each dish tells a story of tradition and innovation.
-                </p>
-            </div>
-
-            {% if categories %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {% for category in categories %}
-                        {% for item in menu_items %}
-                            {% if item.category == category and forloop.counter0 < 6 %}
-                                <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-500 hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-2 border border-gray-100 h-full flex flex-col">
-                                    {% if item.image %}
-                                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-64 object-cover transition-transform duration-700 hover:scale-110">
-                                    {% else %}
-                                        <div class="bg-gray-200 h-64 flex items-center justify-center">
-                                            <span class="text-gray-500">No Image</span>
-                                        </div>
-                                    {% endif %}
-                                    <div class="p-8 flex-grow flex flex-col">
-                                        <div class="mb-2">
-                                            <span class="inline-block px-3 py-1 text-xs font-semibold text-primary bg-blue-100 rounded-full">
-                                                {{ category.name }}
-                                            </span>
-                                        </div>
-                                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ item.name }}</h3>
-                                        <p class="text-gray-600 mb-4 flex-grow">{{ item.description|truncatewords:15 }}</p>
-                                        <div class="flex items-center justify-between mt-auto">
-                                            <span class="text-2xl font-bold text-primary">${{ item.price }}</span>
-                                            {% if item.is_available %}
-                                                {% if user.is_authenticated %}
-                                                    <form action="{% url 'add_to_cart' item.id %}" method="post" class="inline">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="px-8 py-3.5 rounded-full font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-[1.02] active:scale-[0.98] bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20 focus:ring-primary text-sm">
-                                                            Add to Cart
+                <div class="max-w-7xl mx-auto relative z-10">
+                                    <div class="text-center mb-16 relative">
+                                        <h2 class="text-4xl md:text-5xl font-bold text-dark mb-4 text-center">Our Delicious Menu</h2>
+                                        <p class="text-lg text-gray-600 max-w-2xl mx-auto text-center">
+                                            Handcrafted with passion and premium ingredients. Explore our categories to find your favorites.
+                                        </p>
+                                        {% if is_staff_member %}
+                                            <div class="mt-8">
+                                                <a href="{% url 'add_menu_item' %}" class="inline-flex items-center px-6 py-3 bg-secondary hover:bg-emerald-600 text-white font-bold rounded-full shadow-lg transition-all transform hover:scale-105">
+                                                    <i class="fas fa-plus mr-2"></i> Add New Menu Item
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>        
+                                            {% if categories %}
+                                                <!-- Category Navigation Tabs -->
+                                                <div class="flex flex-wrap justify-center gap-4 mb-12">
+                                                    {% for category in categories %}
+                                                        <button onclick="filterMenu('category-{{ category.id }}')" id="btn-category-{{ category.id }}" class="menu-tab-btn px-8 py-3 rounded-full bg-white text-gray-700 font-bold border border-gray-200 shadow-sm transition-all transform hover:bg-primary hover:text-white hover:border-primary hover:scale-105 active:scale-95">
+                                                            {{ category.name }}
                                                         </button>
-                                                    </form>
-                                                {% else %}
-                                                    <a href="{% url 'login' %}?next={% url 'home' %}" class="px-8 py-3.5 rounded-full font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-[1.02] active:scale-[0.98] bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20 focus:ring-primary text-sm">
-                                                        Add to Cart
-                                                    </a>
-                                                {% endif %}
-                                            {% else %}
-                                                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">
-                                                    Unavailable
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-
-                <div class="text-center mt-12">
-                    <a href="{% url 'home' %}#menu" class="px-8 py-3.5 rounded-full font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-[1.02] active:scale-[0.98] bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20 focus:ring-primary inline-block">
-                        View Full Menu
-                    </a>
-                </div>
-            {% else %}
-                <div class="text-center py-16">
+                                                    {% endfor %}
+                                                </div>
+                                
+                                                <!-- Category Content -->
+                                                <div id="menu-container" class="min-h-[400px]">
+                                                    {% for category in categories %}
+                                                        <div id="category-{{ category.id }}" class="menu-category-section transition-all duration-500 hidden opacity-0">
+                                                            <div class="flex items-center mb-10">
+                                                                <h3 class="text-3xl font-bold text-dark mr-6">{{ category.name }}</h3>
+                                                                <div class="flex-grow h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
+                                                            </div>
+                                                            
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                                {% for item in menu_items %}
+                                                                    {% if item.category == category %}
+                                                                        <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-500 hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-2 border border-gray-100 h-full flex flex-col">
+                                                                            {% if item.image %}
+                                                                                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-64 object-cover">
+                                                                            {% else %}
+                                                                                <div class="bg-gray-200 h-64 flex items-center justify-center">
+                                                                                    <span class="text-gray-500">No Image</span>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                            <div class="p-8 flex-grow flex flex-col">
+                                                                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ item.name }}</h3>
+                                                                                <p class="text-gray-600 mb-4 flex-grow">{{ item.description|truncatewords:15 }}</p>
+                                                                                                                                                                                <div class="flex items-center justify-between mt-auto">
+                                                                                                                                                                                    <span class="text-2xl font-bold text-primary">Rs. {{ item.price }}</span>
+                                                                                                                                                                                    {% if item.is_available and not is_staff_member %}
+                                                                                                                                                                                        <form action="{% url 'add_to_order' item.id %}" method="post" class="inline">
+                                                                                                                                                                                            {% csrf_token %}
+                                                                                                                                                                                            <button type="submit" data-add-to-order class="px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 bg-primary text-white hover:bg-primary-dark shadow-lg shadow-primary/20 text-sm">
+                                                                                                                                                                                                Add to Order
+                                                                                                                                                                                            </button>
+                                                                                                                                                                                        </form>
+                                                                                                                                                                                    {% elif not item.is_available and not is_staff_member %}
+                                                                                                                                                                                        <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium">
+                                                                                                                                                                                            Unavailable
+                                                                                                                                                                                        </span>
+                                                                                                                                                                                    {% endif %}
+                                                                                                                                
+                                                                                                                                                                                    {% if is_staff_member %}
+                                                                                                                                                                                        <div class="flex gap-2">
+                                                                                                                                                                                            <a href="{% url 'edit_menu_item' item.id %}" class="p-2 bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-colors" title="Edit Item">
+                                                                                                                                                                                                <i class="fas fa-edit"></i>
+                                                                                                                                                                                            </a>
+                                                                                                                                                                                            <a href="{% url 'delete_menu_item' item.id %}" class="p-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors" title="Delete Item">
+                                                                                                                                                                                                <i class="fas fa-trash"></i>
+                                                                                                                                                                                            </a>
+                                                                                                                                                                                        </div>
+                                                                                                                                                                                    {% endif %}
+                                                                                                                                                                                </div>                                                                            </div>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                
+                                                <script>
+                                                    function filterMenu(categoryId) {
+                                                        const sections = document.querySelectorAll('.menu-category-section');
+                                                        const buttons = document.querySelectorAll('.menu-tab-btn');
+                                                        
+                                                        // Hide all sections first
+                                                        sections.forEach(section => {
+                                                            section.classList.add('hidden');
+                                                            section.classList.remove('opacity-100');
+                                                            section.classList.add('opacity-0');
+                                                        });
+                                
+                                                        // Reset all buttons
+                                                        buttons.forEach(btn => {
+                                                            btn.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+                                                            btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                                                        });
+                                
+                                                        // Show active section
+                                                        const activeSection = document.getElementById(categoryId);
+                                                        if (activeSection) {
+                                                            activeSection.classList.remove('hidden');
+                                                            // Small timeout to allow 'hidden' to be removed before starting opacity transition
+                                                            setTimeout(() => {
+                                                                activeSection.classList.remove('opacity-0');
+                                                                activeSection.classList.add('opacity-100');
+                                                            }, 50);
+                                                        }
+                                
+                                                        // Set active button
+                                                        const activeBtn = document.getElementById('btn-' + categoryId);
+                                                        if (activeBtn) {
+                                                            activeBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                                                            activeBtn.classList.add('bg-primary', 'text-white', 'shadow-lg');
+                                                        }
+                                                    }
+                                                    
+                                                    // Initialize: Show the first category by default
+                                                    document.addEventListener('DOMContentLoaded', () => {
+                                                        const firstSection = document.querySelector('.menu-category-section');
+                                                        if (firstSection) {
+                                                            filterMenu(firstSection.id);
+                                                        }
+                                                    });
+                                                </script>
+                                            {% else %}                <div class="text-center py-16">
                     <div class="text-6xl mb-4">☕</div>
                     <h3 class="text-2xl font-bold text-gray-900 mb-2">Menu Coming Soon</h3>
                     <p class="text-gray-600 mb-6">Our delicious menu items are being prepared. Check back soon!</p>
@@ -150,7 +215,7 @@
     </section>
 
     <!-- Reviews Section -->
-    {% if reviews %}
+    {% if reviews and not is_staff_member %}
         <section class="py-24 px-6 bg-gray-50">
             <div class="max-w-7xl mx-auto">
                 <div class="text-center mb-16">
@@ -203,6 +268,7 @@
     {% endif %}
 
     <!-- Location & Contact Section -->
+    {% if not is_staff_member %}
     <section class="py-24 px-6 bg-gradient-to-br from-primary/10 to-secondary/10">
         <div class="max-w-7xl mx-auto">
             <div class="text-center mb-16">
@@ -299,4 +365,5 @@
             </div>
         </div>
     </section>
+    {% endif %}
 {% endblock %}

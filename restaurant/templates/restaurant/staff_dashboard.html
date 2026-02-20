@@ -1,0 +1,153 @@
+{% extends 'restaurant/base.html' %}
+
+{% block title %}Staff Dashboard - Sky Food Corner{% endblock %}
+
+{% block content %}
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-dark">Staff Dashboard</h1>
+                <p class="text-gray-600 mt-1">Manage and verify your daily operations</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'home' %}" class="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-lg font-medium transition-colors flex items-center">
+                    <i class="fas fa-home mr-2"></i> View Site
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-10">
+            <!-- Active Orders Column -->
+            <div class="space-y-8">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-dark flex items-center">
+                        <i class="fas fa-shopping-bag mr-3 text-primary"></i>
+                        Active Orders
+                        <span class="ml-3 px-3 py-0.5 text-sm bg-primary/10 text-primary rounded-full">{{ pending_orders|length }}</span>
+                    </h2>
+                </div>
+
+                {% if pending_orders %}
+                    <div class="space-y-4">
+                        {% for order in pending_orders %}
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">Order #{{ order.id }}</h3>
+                                        <p class="text-sm text-gray-500">{{ order.order_date|date:"M d, Y H:i" }}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold 
+                                        {% if order.status == 'Pending' %}bg-amber-100 text-amber-700
+                                        {% elif order.status == 'Processing' %}bg-blue-100 text-blue-700
+                                        {% elif order.status == 'Completed' %}bg-green-100 text-green-700
+                                        {% else %}bg-red-100 text-red-700{% endif %}">
+                                        {{ order.status }}
+                                    </span>
+                                </div>
+
+                                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <p class="text-sm font-medium text-dark mb-2">Customer Info:</p>
+                                    <p class="text-sm text-gray-600">Name: {{ order.customer_name }}</p>
+                                    <p class="text-sm text-gray-600">Email: {{ order.customer_email }}</p>
+                                    {% if order.customer_phone %}
+                                        <p class="text-sm text-gray-600">Phone: {{ order.customer_phone }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-6">
+                                    <p class="text-sm font-medium text-dark mb-2">Items:</p>
+                                    <ul class="text-sm text-gray-600 list-disc list-inside">
+                                        {% for item in order.items.all %}
+                                            <li>{{ item.quantity }}x {{ item.menu_item.name }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    <p class="text-right font-bold text-primary mt-2">Total: Rs. {{ order.total_amount|floatformat:2 }}</p>
+                                </div>
+
+                                <form action="{% url 'update_order_status' order.id %}" method="post" class="flex gap-2">
+                                    {% csrf_token %}
+                                    <select name="status" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm focus:ring-primary focus:border-primary">
+                                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                        <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                    <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                        Update
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+                        <i class="fas fa-clipboard-check text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-600">No active orders</h3>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pending Reservations Column -->
+            <div class="space-y-8">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-dark flex items-center">
+                        <i class="fas fa-calendar-check mr-3 text-secondary"></i>
+                        Pending Reservations
+                        <span class="ml-3 px-3 py-0.5 text-sm bg-secondary/10 text-secondary rounded-full">{{ recent_reservations|length }}</span>
+                    </h2>
+                </div>
+
+                {% if recent_reservations %}
+                    <div class="space-y-4">
+                        {% for reservation in recent_reservations %}
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">{{ reservation.name }}</h3>
+                                        <p class="text-sm text-gray-500">Requested on {{ reservation.created_at|date:"M d, Y" }}</p>
+                                    </div>
+                                    <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">Unconfirmed</span>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-6">
+                                    <div class="bg-gray-50 rounded-xl p-3">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Date</p>
+                                        <p class="text-sm font-semibold text-dark">{{ reservation.date|date:"M d, Y" }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-3">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Time</p>
+                                        <p class="text-sm font-semibold text-dark">{{ reservation.time|time:"H:i" }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-3">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Guests</p>
+                                        <p class="text-sm font-semibold text-dark">{{ reservation.number_of_guests }} People</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-xl p-3">
+                                        <p class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Contact</p>
+                                        <p class="text-sm font-semibold text-dark">{{ reservation.phone|default:reservation.email }}</p>
+                                    </div>
+                                </div>
+
+                                {% if reservation.special_requests %}
+                                    <div class="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                        <p class="text-xs text-amber-800 uppercase font-bold tracking-wider mb-1">Special Requests:</p>
+                                        <p class="text-sm text-amber-900 italic">"{{ reservation.special_requests }}"</p>
+                                    </div>
+                                {% endif %}
+
+                                <a href="{% url 'confirm_reservation_staff' reservation.id %}" class="block w-full text-center bg-secondary hover:bg-secondary-dark text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.01] active:scale-[0.99]">
+                                    Confirm Reservation
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+                        <i class="fas fa-calendar-check text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-600">No pending reservations</h3>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
