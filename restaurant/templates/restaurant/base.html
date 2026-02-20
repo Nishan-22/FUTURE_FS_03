@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sky Food Corner - Delicious Cafe Experience{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .bg-light {
+            background-color: #f8fafc;
+        }
+        .text-dark {
+            color: #1e293b;
+        }
+        .bg-primary {
+            background-color: #0ea5e9;
+        }
+        .bg-primary-dark {
+            background-color: #0284c7;
+        }
+        .bg-secondary {
+            background-color: #10b981;
+        }
+        .bg-accent {
+            background-color: #8b5cf6;
+        }
+        .bg-error {
+            background-color: #ef4444;
+        }
+        .bg-success {
+            background-color: #22c55e;
+        }
+        .hover-bg-primary:hover {
+            background-color: #0284c7;
+        }
+        .hover-bg-secondary:hover {
+            background-color: #059669;
+        }
+        .hover-bg-accent:hover {
+            background-color: #7c3aed;
+        }
+        .hover-bg-error:hover {
+            background-color: #dc2626;
+        }
+        .text-primary {
+            color: #0ea5e9;
+        }
+        .text-secondary {
+            color: #10b981;
+        }
+        .text-accent {
+            color: #8b5cf6;
+        }
+        .text-error {
+            color: #ef4444;
+        }
+        .text-success {
+            color: #22c55e;
+        }
+        .border-primary {
+            border-color: #0ea5e9;
+        }
+        .border-secondary {
+            border-color: #10b981;
+        }
+        .border-accent {
+            border-color: #8b5cf6;
+        }
+        .border-error {
+            border-color: #ef4444;
+        }
+        .border-success {
+            border-color: #22c55e;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%);
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn {
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .nav-link {
+            position: relative;
+            display: inline-block;
+            margin: 0 10px;
+            color: #1e293b;
+            text-decoration: none;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: #0ea5e9;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full z-50 top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl font-bold text-primary">Sky<span class="text-secondary">Food</span>Corner</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'home' %}" class="nav-link text-dark hover:text-primary">Home</a>
+                    <a href="{% url 'home' %}#menu" class="nav-link text-dark hover:text-primary">Menu</a>
+                    <a href="{% url 'reservation_view' %}" class="nav-link text-dark hover:text-primary">Reserve</a>
+                    <a href="{% url 'contact_us' %}" class="nav-link text-dark hover:text-primary">Contact</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'profile' %}" class="nav-link text-dark hover:text-primary">Profile</a>
+                        <form method="post" action="{% url 'logout' %}" class="inline" onsubmit="return confirm('Are you sure you want to logout?');">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-dark hover:text-primary bg-transparent border-none cursor-pointer p-0 m-0">Logout</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="nav-link text-dark hover:text-primary">Login</a>
+                    {% endif %}
+                    <a href="{% url 'cart_view' %}" class="nav-link text-dark hover:text-primary">
+                        <i class="fas fa-shopping-cart"></i> Cart
+                        {% if request.session.cart %}
+                            <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                                {{ request.session.cart.items|length }}
+                            </span>
+                        {% endif %}
+                    </a>
+                </div>
+                <div class="flex items-center md:hidden">
+                    <button id="mobile-menu-button" class="outline-none">
+                        <i class="fas fa-bars text-2xl text-dark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="{% url 'home' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Home</a>
+                <a href="{% url 'home' %}#menu" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Menu</a>
+                <a href="{% url 'reservation_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Reserve</a>
+                <a href="{% url 'contact_us' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Contact</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Profile</a>
+                    <form method="post" action="{% url 'logout' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100 w-full text-left" onsubmit="return confirm('Are you sure you want to logout?');">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-transparent border-none cursor-pointer p-0 m-0 w-full">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">Login</a>
+                {% endif %}
+                <a href="{% url 'cart_view' %}" class="block px-3 py-2 rounded-md text-base font-medium text-dark hover:bg-gray-100">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                    {% if request.session.cart %}
+                        <span class="bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">
+                            {{ request.session.cart.items|length }}
+                        </span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Spacing for fixed navbar -->
+    <div class="h-16"></div>
+
+    <!-- Main Content -->
+    <main>
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for message in messages %}
+                    <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %} mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="md:col-span-1">
+                    <h3 class="text-2xl font-bold text-white mb-4">Sky<span class="text-secondary">Food</span>Corner</h3>
+                    <p class="text-gray-300 mb-4">
+                        Your favorite destination for delicious food and drinks in a cozy atmosphere.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-white">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'home' %}" class="text-gray-300 hover:text-white">Home</a></li>
+                        <li><a href="{% url 'home' %}#menu" class="text-gray-300 hover:text-white">Menu</a></li>
+                        <li><a href="{% url 'reservation_view' %}" class="text-gray-300 hover:text-white">Reservations</a></li>
+                        <li><a href="{% url 'contact_us' %}" class="text-gray-300 hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-white">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-3 text-primary"></i>
+                            <span>Sky Food Corner<br>Kathmandu, Nepal</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone-alt mr-3 text-primary"></i>
+                            <span>+977 [Your Phone Number]</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-3 text-primary"></i>
+                            <span>info@skyfoodcorner.com</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4 text-white">Business Hours</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li class="flex justify-between">
+                            <span>Sunday - Friday</span>
+                            <span>7:00 AM - 11:00 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span>Saturday</span>
+                            <span>8:00 AM - 12:00 AM</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2026 Sky Food Corner. All rights reserved. | Designed with ❤️ for great food experiences</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

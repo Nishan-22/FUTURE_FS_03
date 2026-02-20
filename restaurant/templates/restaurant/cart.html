@@ -1,0 +1,74 @@
+{% extends 'restaurant/base.html' %}
+
+{% block title %}Your Cart - Sky Food Corner{% endblock %}
+
+{% block content %}
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <h1 class="text-3xl font-bold text-dark text-center mb-8">Your Shopping Cart</h1>
+
+        {% if cart_items %}
+            <div class="space-y-4">
+                {% for item in cart_items %}
+                    <div class="flex items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                        {% if item.image %}
+                            <img src="{{ item.image }}" alt="{{ item.name }}" class="w-20 h-20 rounded-lg object-cover mr-6 flex-shrink-0">
+                        {% endif %}
+                        <div class="flex-grow">
+                            <h2 class="text-xl font-bold text-gray-900">{{ item.name }}</h2>
+                            <p class="text-gray-600 text-sm">${{ item.price|floatformat:2 }} each</p>
+                        </div>
+                        
+                        <form action="{% url 'update_cart_quantity' item.item_id %}" method="post" class="flex items-center space-x-3 mx-6">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="0" class="w-20 p-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <button type="submit" class="bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                Update
+                            </button>
+                        </form>
+
+                        <form action="{% url 'remove_from_cart' item.item_id %}" method="post" class="ml-2">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-error hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                                Remove
+                            </button>
+                        </form>
+
+                        <p class="text-xl font-semibold ml-auto text-primary">Subtotal: ${{ item.subtotal|floatformat:2 }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-10 pt-6 border-t-2 border-gray-200">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-dark mb-2">Total: <span class="text-primary">${{ total_price|floatformat:2 }}</span></h2>
+                        <p class="text-gray-600">Ready to complete your order?</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <a href="{% url 'home' %}" class="bg-secondary hover:bg-emerald-600 text-white font-medium py-3 px-6 rounded-lg text-center transition-colors">
+                            Continue Shopping
+                        </a>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'checkout' %}" class="bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-lg text-center transition-colors">
+                                Proceed to Checkout
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}?next={% url 'checkout' %}" class="bg-accent hover:bg-purple-600 text-white font-medium py-3 px-6 rounded-lg text-center transition-colors">
+                                Login to Checkout
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-16">
+                <div class="text-6xl mb-6 text-gray-300">🛒</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h3>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto">Discover our delicious menu items and add them to your cart to get started.</p>
+                <a href="{% url 'home' %}#menu" class="bg-primary hover:bg-primary-dark text-white font-medium py-3 px-8 rounded-lg inline-block transition-colors">
+                    Browse Our Menu
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

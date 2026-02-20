@@ -1,0 +1,12 @@
+{% extends 'restaurant/base.html' %}
+
+{% block title %}Logged Out{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold text-red-700 text-center mb-6">Logged Out</h1>
+    <p class="text-center text-gray-700 text-lg mb-4">You have been successfully logged out.</p>
+    <div class="text-center mt-6">
+        <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-block mr-2">Log In again</a>
+        <a href="{% url 'home' %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-block">Return to Home</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #3b82f6;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-card.orders {
+        border-left-color: #10b981;
+    }
+    .stat-card.reservations {
+        border-left-color: #8b5cf6;
+    }
+    .stat-card.menu {
+        border-left-color: #f59e0b;
+    }
+    .stat-card.reviews {
+        border-left-color: #ef4444;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 5px;
+    }
+    .stat-label {
+        color: #6b7280;
+        font-size: 1rem;
+    }
+    .stat-pending {
+        color: #f59e0b;
+        font-weight: 600;
+    }
+    .stat-processing {
+        color: #3b82f6;
+        font-weight: 600;
+    }
+    .stat-completed {
+        color: #10b981;
+        font-weight: 600;
+    }
+    .quick-actions {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 30px;
+    }
+    .action-button {
+        display: inline-block;
+        padding: 12px 24px;
+        margin: 5px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    .btn-success {
+        background: #10b981;
+        color: white;
+    }
+    .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+    .btn-purple {
+        background: #8b5cf6;
+        color: white;
+    }
+    .btn-purple:hover {
+        background: #7c3aed;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <h1>Welcome to Sky Food Corner Admin Dashboard</h1>
+    
+    <!-- Dashboard Statistics -->
+    <div class="dashboard-stats">
+        <div class="stat-card orders">
+            <div class="stat-number">{{ pending_orders }}</div>
+            <div class="stat-label">Pending Orders</div>
+            <div class="stat-pending">{{ processing_orders }} Processing | {{ completed_orders }} Completed</div>
+        </div>
+        
+        <div class="stat-card reservations">
+            <div class="stat-number">{{ pending_reservations }}</div>
+            <div class="stat-label">Pending Reservations</div>
+            <div class="stat-processing">{{ confirmed_reservations }} Confirmed</div>
+        </div>
+        
+        <div class="stat-card menu">
+            <div class="stat-number">{{ total_menu_items }}</div>
+            <div class="stat-label">Active Menu Items</div>
+            <div class="stat-completed">Ready to serve</div>
+        </div>
+        
+        <div class="stat-card reviews">
+            <div class="stat-number">{{ total_reviews }}</div>
+            <div class="stat-label">Customer Reviews</div>
+            <div class="stat-processing">Avg Rating: {{ average_rating|floatformat:1 }}</div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div>
+            <a href="{% url 'admin:restaurant_order_changelist' %}" class="action-button btn-primary">
+                Manage Orders
+            </a>
+            <a href="{% url 'admin:restaurant_reservation_changelist' %}" class="action-button btn-purple">
+                Manage Reservations
+            </a>
+            <a href="{% url 'admin:restaurant_menuitem_changelist' %}" class="action-button btn-success">
+                Manage Menu
+            </a>
+            <a href="{% url 'admin:restaurant_review_changelist' %}" class="action-button btn-primary">
+                View Reviews
+            </a>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="module">
+        <table>
+            <caption>Recent Orders</caption>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>${{ order.total_amount }}</td>
+                    <td>
+                        <span class="status-badge status-{{ order.status|lower }}">
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td>{{ order.order_date|date:"M d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'admin:restaurant_order_change' order.id %}">View</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No recent orders</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
