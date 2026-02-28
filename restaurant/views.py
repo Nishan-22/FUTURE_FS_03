@@ -139,7 +139,7 @@ def register(request):
             return redirect('home')
     else:
         form = UserCreationForm()
-    return render(request, 'registration/register.html', {'form': form})
+    return render(request, 'restaurant/register.html', {'form': form})
 
 @login_required
 def profile(request):
